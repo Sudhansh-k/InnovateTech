@@ -1,3 +1,5 @@
+[![Built with Bolt.new](https://bolt.new/badge.svg)](https://bolt.new)
+
 # InnovateTech Platform
 
 A comprehensive AI-powered business management platform with voice assistants, video consultations, and real-time analytics.
