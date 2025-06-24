@@ -96,30 +96,6 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       color: 'text-blue-600 dark:text-blue-400'
     },
     {
-      icon: MessageSquare,
-      label: 'Send Message',
-      action: () => onMessage?.(member),
-      color: 'text-green-600 dark:text-green-400'
-    },
-    {
-      icon: Video,
-      label: 'Video Call',
-      action: () => onVideoCall?.(member),
-      color: 'text-purple-600 dark:text-purple-400'
-    },
-    {
-      icon: Phone,
-      label: 'Phone Call',
-      action: () => onPhoneCall?.(member),
-      color: 'text-indigo-600 dark:text-indigo-400'
-    },
-    {
-      icon: Mail,
-      label: 'Send Email',
-      action: () => onEmail?.(member),
-      color: 'text-cyan-600 dark:text-cyan-400'
-    },
-    {
       icon: Edit,
       label: 'Edit Profile',
       action: () => onEdit?.(member),
@@ -132,55 +108,12 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       color: 'text-pink-600 dark:text-pink-400'
     },
     {
-      icon: Shield,
-      label: 'Change Role',
-      action: () => onChangeRole?.(member),
-      color: 'text-yellow-600 dark:text-yellow-400'
-    },
-    {
-      icon: Award,
-      label: 'Assign Project',
-      action: () => onAssignProject?.(member),
-      color: 'text-pink-600 dark:text-pink-400'
-    },
-    {
-      icon: Calendar,
-      label: 'View Schedule',
-      action: () => onViewSchedule?.(member),
-      color: 'text-teal-600 dark:text-teal-400'
-    },
-    {
-      icon: Download,
-      label: 'Export Profile',
-      action: () => onExportProfile?.(member),
-      color: 'text-gray-600 dark:text-gray-400'
-    },
-    {
-      icon: Settings,
-      label: 'Member Settings',
-      action: () => onMemberSettings?.(member),
-      color: 'text-gray-600 dark:text-gray-400'
+      icon: UserMinus,
+      label: 'Remove from Team',
+      action: () => onDelete?.(member),
+      color: 'text-red-600 dark:text-red-400'
     }
   ];
-
-  // Add promote/demote options if not a leader
-  if (!isLeader) {
-    menuItems.push({
-      icon: UserPlus,
-      label: 'Promote Member',
-      action: () => onPromote?.(member),
-      color: 'text-green-600 dark:text-green-400'
-    });
-  }
-
-  // Add remove option (with separator)
-  menuItems.push({
-    icon: UserMinus,
-    label: 'Remove from Team',
-    action: () => onDelete?.(member),
-    color: 'text-red-600 dark:text-red-400',
-    separator: true
-  });
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -242,7 +175,10 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
               const Icon = item.icon;
               return (
                 <div key={index}>
-                  {item.separator && <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>}
+                  {/* Add separator before the last item */}
+                  {index === menuItems.length - 1 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                  )}
                   <button
                     onClick={() => handleAction(item.action)}
                     className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

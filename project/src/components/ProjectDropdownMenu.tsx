@@ -97,12 +97,6 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
       color: 'text-purple-600 dark:text-purple-400'
     },
     {
-      icon: Star,
-      label: project.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-      action: () => onToggleFavorite?.(project),
-      color: 'text-yellow-600 dark:text-yellow-400'
-    },
-    {
       icon: Copy,
       label: 'Duplicate',
       action: () => onDuplicate?.(project),

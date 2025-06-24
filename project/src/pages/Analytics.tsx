@@ -181,7 +181,7 @@ const Analytics: React.FC = () => {
         };
       }
 
-      // If user only has business data, show basic info
+      // If user only has business data but no historical data, summarize business metrics
       if (hasBusinessData) {
         return {
           totalVisitors: userData.business.users || 0,
@@ -189,7 +189,7 @@ const Analytics: React.FC = () => {
           totalRevenue: userData.business.revenue || 0,
           totalConversions: Math.round((userData.business.users || 0) * (userData.business.conversionRate || 0) / 100),
           avgSessionTime: 0,
-          bounceRate: 0,
+          bounceRate: 35,
           conversionRate: userData.business.conversionRate || 0,
           growth: {
             visitors: 0,
@@ -289,18 +289,23 @@ const Analytics: React.FC = () => {
         }
       }
       
-      // If user only has business data but no historical data, show current values as single point
+      // If user only has business data but no historical data, show a week of flat data
       if (hasBusinessData) {
-        const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        return [{
-          date: today,
-          visitors: userData?.business?.users || 0,
-          pageViews: Math.round((userData?.business?.users || 0) * 2.5),
-          sessions: Math.round((userData?.business?.users || 0) * 1.2),
-          revenue: userData?.business?.revenue || 0,
-          conversions: Math.round((userData?.business?.users || 0) * (userData?.business?.conversionRate || 0) / 100),
-          bounceRate: 35
-        }];
+        const days = 7;
+        const today = new Date();
+        return Array.from({ length: days }, (_, i) => {
+          const date = new Date(today);
+          date.setDate(today.getDate() - (days - 1 - i));
+          return {
+            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            visitors: userData.business.users || 0,
+            pageViews: Math.round((userData.business.users || 0) * 2.5),
+            sessions: Math.round((userData.business.users || 0) * 1.2),
+            revenue: userData.business.revenue || 0,
+            conversions: Math.round((userData.business.users || 0) * (userData.business.conversionRate || 0) / 100),
+            bounceRate: 35
+          };
+        });
       }
       
       return generateEmptyData(timeRange);
