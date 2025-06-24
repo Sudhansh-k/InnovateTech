@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
   };
 
   const generateProjectData = () => {
-    const totalProjects = userData?.projects?.length || 0;
+    const totalProjects = userData?.projects?.length ?? 0;
     if (totalProjects === 0) {
       return [
         { name: 'No Projects', value: 100, color: '#9CA3AF' }
@@ -204,15 +204,6 @@ const Dashboard: React.FC = () => {
                   <Video className="w-4 h-4" />
                   <span>AI Consultant</span>
                 </button>
-                
-                {/* New Project */}
-                <button 
-                  onClick={() => setIsNewProjectModalOpen(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Project</span>
-                </button>
               </div>
             </div>
           </div>
@@ -224,7 +215,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    ${userData?.business.revenue.toLocaleString() || '0'}
+                    ${userData?.business.revenue.toLocaleString() ?? '0'}
                   </p>
                   <div className="flex items-center mt-2">
                     <ArrowUpRight className="w-4 h-4 text-green-500" />
@@ -244,7 +235,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Users</p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {userData?.business.users.toLocaleString() || '0'}
+                    {userData?.business.users.toLocaleString() ?? '0'}
                   </p>
                   <div className="flex items-center mt-2">
                     <ArrowUpRight className="w-4 h-4 text-green-500" />
@@ -264,7 +255,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Conversion Rate</p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {userData?.business.conversionRate.toFixed(1) || '0.0'}%
+                    {userData?.business.conversionRate.toFixed(1) ?? '0.0'}%
                   </p>
                   <div className="flex items-center mt-2">
                     <ArrowDownRight className="w-4 h-4 text-red-500" />
@@ -284,7 +275,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Interactions</p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {userData?.business.aiInteractions.toLocaleString() || '0'}
+                    {userData?.business.aiInteractions.toLocaleString() ?? '0'}
                   </p>
                   <div className="flex items-center mt-2">
                     <ArrowUpRight className="w-4 h-4 text-green-500" />
