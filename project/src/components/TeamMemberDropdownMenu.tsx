@@ -80,12 +80,14 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
     if (onUpdateProgress) {
       onUpdateProgress(member, Math.max(0, value), Math.max(1, member.totalTasks));
     }
+    setShowTaskInput(false);
   };
 
   const handleTotalTasksChange = (value: number) => {
     if (onUpdateProgress) {
       onUpdateProgress(member, Math.max(0, member.completedTasks), Math.max(1, value));
     }
+    setShowTaskInput(false);
   };
 
   const isLeader = member.department === 'Leadership' || member.role.toLowerCase().includes('ceo') || member.role.toLowerCase().includes('cto');
@@ -129,40 +131,34 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-8 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
           {showTaskInput ? (
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <div className="mb-2">
+            <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="mb-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Update Task Progress
                 </label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-xs text-gray-600 dark:text-gray-400 w-16">Completed:</label>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-1">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Done:</label>
                     <input
                       type="number"
                       min="0"
                       value={member.completedTasks || 0}
                       onChange={(e) => handleCompletedTasksChange(parseInt(e.target.value) || 0)}
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      onBlur={() => setShowTaskInput(false)}
+                      className="flex-1 px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-14"
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-xs text-gray-600 dark:text-gray-400 w-16">Total:</label>
+                  <div className="flex items-center space-x-1">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Total:</label>
                     <input
                       type="number"
                       min="1"
                       value={member.totalTasks || 1}
                       onChange={(e) => handleTotalTasksChange(parseInt(e.target.value) || 1)}
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      onBlur={() => setShowTaskInput(false)}
+                      className="flex-1 px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-14"
                     />
                   </div>
-                </div>
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => setShowTaskInput(false)}
-                    className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
