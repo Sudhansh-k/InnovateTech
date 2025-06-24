@@ -73,6 +73,11 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setCompletedTasks(member.completedTasks || 0);
+    setTotalTasks(member.totalTasks || 0);
+  }, [member.completedTasks, member.totalTasks]);
+
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
