@@ -122,7 +122,10 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setShowTaskInput(true);
+        }}
         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <MoreHorizontal className="w-5 h-5" />
@@ -162,26 +165,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                 </div>
               </div>
             </div>
-          ) : (
-            menuItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div key={index}>
-                  {/* Add separator before the last item */}
-                  {index === menuItems.length - 1 && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                  )}
-                  <button
-                    onClick={() => handleAction(item.action)}
-                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Icon className={`w-4 h-4 ${item.color}`} />
-                    <span>{item.label}</span>
-                  </button>
-                </div>
-              );
-            })
-          )}
+          ) : null}
         </div>
       )}
     </div>
