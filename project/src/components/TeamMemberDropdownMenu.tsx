@@ -78,12 +78,18 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
     setIsOpen(false);
   };
 
-  const handleTaskUpdate = () => {
+  const handleCompletedTasksChange = (value: number) => {
+    setCompletedTasks(value);
     if (onUpdateProgress) {
-      onUpdateProgress(member, Math.max(0, completedTasks), Math.max(1, totalTasks));
+      onUpdateProgress(member, Math.max(0, value), Math.max(1, totalTasks));
     }
-    setShowTaskInput(false);
-    setIsOpen(false);
+  };
+
+  const handleTotalTasksChange = (value: number) => {
+    setTotalTasks(value);
+    if (onUpdateProgress) {
+      onUpdateProgress(member, Math.max(0, completedTasks), Math.max(1, value));
+    }
   };
 
   const isLeader = member.department === 'Leadership' || member.role.toLowerCase().includes('ceo') || member.role.toLowerCase().includes('cto');
@@ -139,7 +145,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                       type="number"
                       min="0"
                       value={completedTasks}
-                      onChange={(e) => setCompletedTasks(parseInt(e.target.value) || 0)}
+                      onChange={(e) => handleCompletedTasksChange(parseInt(e.target.value) || 0)}
                       className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -149,25 +155,19 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                       type="number"
                       min="1"
                       value={totalTasks}
-                      onChange={(e) => setTotalTasks(parseInt(e.target.value) || 1)}
+                      onChange={(e) => handleTotalTasksChange(parseInt(e.target.value) || 1)}
                       className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleTaskUpdate}
-                  className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                >
-                  Update
-                </button>
-                <button
-                  onClick={() => setShowTaskInput(false)}
-                  className="flex-1 px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => setShowTaskInput(false)}
+                    className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
