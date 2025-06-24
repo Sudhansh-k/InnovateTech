@@ -5,9 +5,10 @@ interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (projectData: any) => void;
+  teamMembers: string[];
 }
 
-const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onSubmit, teamMembers }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,15 +21,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onSu
 
   const [newTag, setNewTag] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-
-  const teamMembers = [
-    'Sudhansh Khare',
-    'Alex Chen',
-    'Sarah Johnson',
-    'Michael Rodriguez',
-    'David Kim',
-    'Lisa Wang'
-  ];
 
   const predefinedTags = ['AI', 'Voice', 'Video', 'Analytics', 'Mobile', 'Blockchain', 'UI/UX', 'Backend'];
 
@@ -157,19 +149,25 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onSu
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Team Members
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {teamMembers.map((member) => (
-                <label key={member} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedMembers.includes(member)}
-                    onChange={() => toggleMember(member)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{member}</span>
-                </label>
-              ))}
-            </div>
+            {teamMembers.length === 0 ? (
+              <div className="text-gray-400 dark:text-gray-500 italic py-2">
+                No team members available. Please add members from the Team page.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {teamMembers.map((member) => (
+                  <label key={member} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedMembers.includes(member)}
+                      onChange={() => toggleMember(member)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{member}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Tags */}

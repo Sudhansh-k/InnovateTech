@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAI } from '../contexts/AIContext';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 interface AIConsultantModalProps {
   isOpen: boolean;
@@ -25,10 +26,10 @@ interface AIConsultantModalProps {
 }
 
 const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }) => {
-  const [isVideoOn, setIsVideoOn] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
+  const [consultantState, setConsultantState] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [aiResponse, setAiResponse] = useState<string>('');
+  const [emoji, setEmoji] = useState<string>('🤖');
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<Array<{id: string, speaker: 'user' | 'ai', message: string, timestamp: Date}>>([]);
   const [currentTopic, setCurrentTopic] = useState('Getting Started');
@@ -37,6 +38,8 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
   const [currentExpression, setCurrentExpression] = useState('😊');
   const [isListening, setIsListening] = useState(false);
   const [waitingForResponse, setWaitingForResponse] = useState(false);
+  const [tavusError, setTavusError] = useState<string | null>(null);
+  const [micPressed, setMicPressed] = useState(false);
   
   const { generateBusinessInsight } = useAI();
   const { user, userData } = useAuth();
@@ -113,7 +116,9 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
       }
       
       // 4. Reset all states
-      setIsConnected(false);
+      setConsultantState('connecting');
+      setAiResponse('');
+      setEmoji('🤖');
       setSessionStarted(false);
       setSessionDuration(0);
       setConversationHistory([]);
@@ -140,7 +145,7 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
 
   // Session timer
   useEffect(() => {
-    if (isConnected && sessionStarted && !isCleaningUpRef.current && isModalOpenRef.current) {
+    if (consultantState === 'connected' && sessionStarted && !isCleaningUpRef.current && isModalOpenRef.current) {
       sessionIntervalRef.current = setInterval(() => {
         if (sessionStartTime.current && isModalOpenRef.current) {
           const duration = Math.floor((Date.now() - sessionStartTime.current.getTime()) / 1000);
@@ -159,12 +164,25 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
         clearInterval(sessionIntervalRef.current);
       }
     };
-  }, [isConnected, sessionStarted]);
+  }, [consultantState, sessionStarted]);
 
   // Initialize AI Consultant when modal opens
   useEffect(() => {
-    if (isOpen && !sessionStarted && !isCleaningUpRef.current) {
-      initializeAIConsultant();
+    if (isOpen) {
+      setConsultantState('connecting');
+      setAiResponse('');
+      setEmoji('🤖');
+      setTimeout(() => {
+        setConsultantState('connected');
+        setEmoji('😊');
+        const greetingMessage = 'Hello! I am your AI Business Consultant. How can I help you today?';
+        setAiResponse(greetingMessage);
+        speakMessage(greetingMessage, () => {
+          setTimeout(() => {
+            startListeningForUser();
+          }, 1000);
+        });
+      }, 2000);
     }
   }, [isOpen]);
 
@@ -180,34 +198,13 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     };
   }, [isOpen, cleanupSession]);
 
-  const initializeAIConsultant = () => {
-    if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-    
-    console.log('🚀 Initializing AI Consultant...');
-    sessionStartTime.current = new Date();
-    
-    // Simulate connection with realistic delay
-    setTimeout(() => {
-      if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-      
-      setIsConnected(true);
+  // Ensure session timer starts when AI is connected
+  useEffect(() => {
+    if (consultantState === 'connected' && !sessionStarted && !isCleaningUpRef.current && isModalOpenRef.current) {
       setSessionStarted(true);
-      setAiMood('speaking');
-      setCurrentExpression(expressions.speaking);
-      
-      const welcomeMessage = userData 
-        ? `Hello ${user?.firstName}! I'm Dr. Marcus Chen, your AI business consultant. I can see you have $${userData.business.revenue.toLocaleString()} in revenue and ${userData.business.users} users. I'm here to help you accelerate your growth. What specific challenge would you like to tackle today?`
-        : `Hello ${user?.firstName || 'there'}! I'm Dr. Marcus Chen, your AI business consultant. I'm ready to help you build and scale your business. What specific challenge can I help you with today?`;
-      
-      addToConversation('ai', welcomeMessage);
-      speakMessage(welcomeMessage, () => {
-        if (!isCleaningUpRef.current && isModalOpenRef.current) {
-          startListeningForUser();
-        }
-      });
-      
-    }, 2500);
-  };
+      sessionStartTime.current = new Date();
+    }
+  }, [consultantState]);
 
   const speakMessage = (message: string, onComplete?: () => void) => {
     if (isCleaningUpRef.current || !isModalOpenRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -251,8 +248,6 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     utterance.onend = () => {
       if (isCleaningUpRef.current || !isModalOpenRef.current) return;
       setIsSpeaking(false);
-      setAiMood('listening');
-      setCurrentExpression(expressions.listening);
       if (onComplete) onComplete();
     };
     
@@ -260,8 +255,6 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
       console.error('Speech synthesis error:', event);
       if (isCleaningUpRef.current || !isModalOpenRef.current) return;
       setIsSpeaking(false);
-      setAiMood('listening');
-      setCurrentExpression(expressions.listening);
       if (onComplete) onComplete();
     };
     
@@ -270,8 +263,7 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
   };
 
   const startListeningForUser = () => {
-    if (isCleaningUpRef.current || !isModalOpenRef.current || typeof window === 'undefined' || (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window))) {
-      // Fallback: show a message asking user to type or click topics
+    if (typeof window === 'undefined' || (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window))) {
       setTimeout(() => {
         if (!isCleaningUpRef.current && isModalOpenRef.current) {
           const fallbackMessage = "I notice your browser doesn't support voice recognition. Please click on any topic below or type your question, and I'll be happy to help!";
@@ -376,47 +368,45 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     };
 
     recognitionRef.current = recognition;
+    // Set aiMood to listening right before starting recognition
+    setAiMood('listening');
+    setCurrentExpression(expressions.listening);
     recognition.start();
   };
 
+  // If no user response, say a friendly prompt and listen again
   const handleNoResponse = () => {
     if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-    
     setIsListening(false);
     setWaitingForResponse(false);
     setAiMood('speaking');
     setCurrentExpression(expressions.questioning);
-    
     const noResponseMessages = [
-      "I didn't hear anything. What would you like to discuss about your business?",
+      "I didn't hear anything. Could you please repeat your question or try clicking a topic?",
       "Are you still there? Feel free to ask me about revenue growth, team scaling, or any business challenge.",
       "No worries if you're thinking! You can also click on any topic below, and I'll share insights on that area.",
       "Take your time! When you're ready, ask me about any aspect of your business, or choose a topic from the sidebar."
     ];
-    
     const randomMessage = noResponseMessages[Math.floor(Math.random() * noResponseMessages.length)];
     speakMessage(randomMessage, () => {
       if (!isCleaningUpRef.current && isModalOpenRef.current) {
-        setTimeout(() => startListeningForUser(), 3000);
+        setTimeout(() => startListeningForUser(), 2000);
       }
     });
   };
 
+  // After every AI response, always call startListeningForUser()
   const processUserInput = (userInput: string) => {
     if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-    
     setAiMood('thinking');
     setCurrentExpression(expressions.analyzing);
-    
-    // Simulate thinking time
     setTimeout(() => {
       if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-      
       const response = generateContextualResponse(userInput);
       addToConversation('ai', response);
       speakMessage(response, () => {
         if (!isCleaningUpRef.current && isModalOpenRef.current) {
-          setTimeout(() => startListeningForUser(), 2000);
+          setTimeout(() => startListeningForUser(), 1000);
         }
       });
     }, 1500);
@@ -427,7 +417,7 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     
     // Revenue-related queries
     if (input.includes('revenue') || input.includes('money') || input.includes('sales') || input.includes('income')) {
-      if (userData?.business.revenue > 0) {
+      if (userData?.business?.revenue && userData.business.revenue > 0) {
         return `Great question about revenue! With your current $${userData.business.revenue.toLocaleString()}, I see several growth opportunities. You could focus on increasing your average order value, expanding to new customer segments, or optimizing your pricing strategy. Which of these areas interests you most?`;
       } else {
         return `Revenue growth is crucial! Since I don't see your current revenue data, let's start with the basics. What's your primary revenue source right now? Are you selling products, services, or subscriptions? Understanding this will help me give you targeted advice.`;
@@ -436,7 +426,7 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     
     // Team and scaling queries
     if (input.includes('team') || input.includes('hire') || input.includes('staff') || input.includes('employee')) {
-      if (userData?.team?.length > 0) {
+      if (userData?.team && userData.team.length > 0) {
         return `Your team of ${userData.team.length} members is a great foundation! For scaling, I recommend focusing on clear role definitions, efficient communication systems, and performance tracking. What's your biggest team challenge right now - communication, productivity, or finding the right talent?`;
       } else {
         return `Building the right team is essential for growth! I suggest starting with roles that directly impact revenue generation. What's the most critical position you need to fill first - sales, marketing, or technical development?`;
@@ -445,7 +435,7 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     
     // Customer and marketing queries
     if (input.includes('customer') || input.includes('marketing') || input.includes('acquisition') || input.includes('conversion')) {
-      if (userData?.business.conversionRate > 0) {
+      if (userData?.business?.conversionRate && userData.business.conversionRate > 0) {
         return `Your ${userData.business.conversionRate}% conversion rate has room for improvement! I recommend A/B testing your landing pages, optimizing your sales funnel, and creating targeted content. Would you like me to elaborate on any of these strategies?`;
       } else {
         return `Customer acquisition is vital! I suggest developing a multi-channel approach including content marketing, social media, and strategic partnerships. What's your current customer acquisition strategy, and where do most of your customers come from?`;
@@ -622,22 +612,28 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
     }
   };
 
+  // Update emoji background to glassy, semi-transparent white with colored border/glow by mood
+  const getEmojiBorderColor = () => {
+    if (aiMood === 'speaking') return '#2563eb'; // blue
+    if (aiMood === 'thinking') return '#facc15'; // yellow
+    if (aiMood === 'listening') return '#22c55e'; // green
+    return '#cbd5e1'; // gray for idle/connecting
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black/95 flex items-center justify-center z-50 ${isFullscreen ? 'p-0' : 'p-4'}`}>
-      <div className={`bg-gray-900 rounded-2xl shadow-2xl flex flex-col ${
-        isFullscreen ? 'w-full h-full rounded-none' : 'w-full max-w-6xl h-[90vh]'
-      }`}>
+    <div className={`fixed inset-0 bg-black/90 flex items-center justify-center z-50`}>
+      <div className={`bg-[#181c23]/95 rounded-2xl shadow-2xl flex flex-col w-full max-w-6xl h-[90vh] border border-gray-700/50`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <div className="flex items-center space-x-4">
-            <div className={`w-3 h-3 ${isConnected ? 'bg-green-500' : 'bg-yellow-500'} rounded-full animate-pulse`}></div>
+            <div className={`w-3 h-3 ${consultantState === 'connected' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full animate-pulse`}></div>
             <div>
               <h2 className="text-xl font-bold text-white">AI Business Consultant</h2>
               <div className="flex items-center space-x-4 text-sm">
                 {getAiMoodIndicator()}
-                {sessionStarted && (
+                {consultantState === 'connected' && (
                   <div className="flex items-center space-x-1 text-gray-400">
                     <Clock className="w-4 h-4" />
                     <span>{formatDuration(sessionDuration)}</span>
@@ -649,19 +645,6 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
           
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={downloadTranscript}
-              disabled={conversationHistory.length === 0}
-              className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-            <button
               onClick={handleEndCall}
               className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
@@ -672,89 +655,69 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main Video Area */}
-          <div className="flex-1 relative bg-black rounded-lg m-4 overflow-y-auto">
-            {!isConnected ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                  <p className="text-white text-xl mb-2">Connecting to AI Consultant...</p>
-                  <p className="text-gray-400 text-sm">Analyzing your business data and preparing insights...</p>
-                  <div className="mt-4 flex justify-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
+          <div className="flex-1 relative rounded-lg m-4 overflow-y-auto" style={{
+            background: 'rgba(10, 14, 20, 0.92)',
+            position: 'relative',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(20,30,60,0.55)',
+              zIndex: 1,
+              borderRadius: 'inherit',
+              pointerEvents: 'none',
+            }} />
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              {consultantState === 'connecting' && (
+                <div style={{ textAlign: 'center', marginTop: 40 }}>
+                  <div style={{
+                    fontSize: 140,
+                    margin: '0 auto',
+                    width: 180,
+                    height: 180,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#60a5fa',
+                    fontWeight: 800,
+                    background: 'radial-gradient(circle at 60% 40%, #3b82f6 0%, #1e40af 100%)',
+                    boxShadow: '0 8px 32px 0 #1e40af33',
+                    transition: 'color 0.3s, transform 0.1s',
+                    animation: aiMood === 'listening' ? 'pulse 1.2s infinite, scaleUp 0.2s' : 'pulse 1.5s infinite',
+                  }}>{expressions[aiMood] || expressions.idle}</div>
+                  <div style={{ marginTop: 24, fontWeight: 700, fontSize: 28, letterSpacing: 0.5, color: '#60a5fa' }}>Connecting to AI Consultant...</div>
+                  <div style={{ fontSize: 14, color: '#e0e7ef', marginTop: 8 }}>Analyzing your business data and preparing insights...</div>
                 </div>
-              </div>
-            ) : (
-              <>
-                {/* AI Consultant Video */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="relative mb-6">
-                      {/* AI Avatar with animated expressions */}
-                      <div className="w-48 h-48 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-8xl font-bold mx-auto border-4 border-white/20 shadow-2xl">
-                        <span className="animate-pulse">{currentExpression}</span>
-                      </div>
-                      
-                      {/* Mood indicators */}
-                      {aiMood === 'listening' && (
-                        <div className="absolute inset-0 border-4 border-green-400 rounded-full animate-ping"></div>
-                      )}
-                      {aiMood === 'speaking' && (
-                        <div className="absolute inset-0 border-4 border-blue-400 rounded-full animate-pulse"></div>
-                      )}
-                      {aiMood === 'thinking' && (
-                        <div className="absolute inset-0 border-4 border-yellow-400 rounded-full animate-pulse"></div>
-                      )}
-
-                      {/* Listening animation */}
-                      {isListening && (
-                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                          <div className="flex items-center space-x-2 bg-green-500/20 px-4 py-2 rounded-full backdrop-blur-sm">
-                            <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                            <span className="text-green-300 text-sm font-medium">Listening...</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="text-4xl font-bold text-white mb-2">Dr. Marcus Chen</h3>
-                    <p className="text-blue-200 text-xl mb-2">AI Business Strategy Consultant</p>
-                    <p className="text-blue-300 text-lg">MBA Harvard • 15+ Years Experience</p>
-                    <div className="mt-4 px-6 py-2 bg-white/10 rounded-full backdrop-blur-sm">
-                      <p className="text-blue-100 text-sm">
-                        {aiMood === 'thinking' && '🧠 Analyzing your business metrics...'}
-                        {aiMood === 'speaking' && '💬 Sharing strategic insights...'}
-                        {aiMood === 'listening' && waitingForResponse && '👂 Waiting for your response...'}
-                        {aiMood === 'listening' && !waitingForResponse && '👂 Ready to help you grow...'}
-                        {aiMood === 'idle' && '😊 Hello! Ready to transform your business?'}
-                      </p>
-                    </div>
-                  </div>
+              )}
+              {consultantState === 'connected' && (
+                <div style={{ textAlign: 'center', marginTop: 40 }}>
+                  <div style={{
+                    fontSize: 140,
+                    margin: '0 auto',
+                    width: 180,
+                    height: 180,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#60a5fa',
+                    fontWeight: 800,
+                    background: 'radial-gradient(circle at 60% 40%, #3b82f6 0%, #1e40af 100%)',
+                    boxShadow: '0 8px 32px 0 #1e40af33',
+                    transition: 'color 0.3s, transform 0.1s',
+                    animation: aiMood === 'listening' ? 'pulse 1.2s infinite, scaleUp 0.2s' : 'pulse 1.5s infinite',
+                  }}>{expressions[aiMood] || expressions.idle}</div>
+                  <div style={{ marginTop: 24, fontWeight: 700, fontSize: 28, letterSpacing: 0.5, color: '#60a5fa' }}>{aiResponse}</div>
                 </div>
-
-                {/* User Video (Picture-in-Picture) */}
-                <div className="absolute top-4 right-4 w-48 h-36 bg-gray-800 rounded-lg border-2 border-gray-600 flex items-center justify-center">
-                  {isVideoOn ? (
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold mb-2">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                      </div>
-                      <p className="text-white text-xs">{user?.firstName}</p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <VideoOff className="w-8 h-8 text-gray-400 mb-2" />
-                      <p className="text-gray-400 text-xs">Camera Off</p>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
-          <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
+          <div className="w-80 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-l border-blue-700/30 flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-blue-700 scrollbar-track-gray-800" style={{ maxHeight: '100%' }}>
             {/* Topics */}
             <div className="p-4 border-b border-gray-700">
               <h3 className="text-white font-semibold mb-3">Discussion Topics</h3>
@@ -766,8 +729,8 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
                     disabled={aiMood === 'thinking' || isSpeaking || isCleaningUpRef.current}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 ${
                       currentTopic === topic
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-700'
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-blue-900/30 hover:text-white'
                     }`}
                   >
                     {topic}
@@ -803,57 +766,18 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
                 </div>
               </div>
             )}
-
-            {/* Conversation History */}
-            <div className="flex-1 p-4 overflow-y-auto">
-              <h3 className="text-white font-semibold mb-3">Conversation</h3>
-              <div className="space-y-3">
-                {conversationHistory.slice(-5).map((item) => (
-                  <div key={item.id} className={`p-3 rounded-lg ${
-                    item.speaker === 'ai' ? 'bg-blue-900/30' : 'bg-gray-700'
-                  }`}>
-                    <div className="flex items-center space-x-2 mb-1">
-                      {item.speaker === 'ai' ? (
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">AI</span>
-                        </div>
-                      ) : (
-                        <User className="w-5 h-5 text-gray-400" />
-                      )}
-                      <span className="text-xs text-gray-400">
-                        {item.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <p className="text-white text-sm">{item.message}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between p-6 bg-gray-800 rounded-b-2xl border-t border-gray-700">
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-b-2xl border-t border-blue-700/30">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setIsVideoOn(!isVideoOn)}
-              disabled={isCleaningUpRef.current}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
-                isVideoOn ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
-            >
-              {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
-            </button>
-
             {/* Microphone Control */}
             <button
               onClick={() => {
                 if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-                
                 if (isListening) {
-                  if (recognitionRef.current) {
-                    recognitionRef.current.stop();
-                  }
+                  if (recognitionRef.current) recognitionRef.current.stop();
                   setIsListening(false);
                   setWaitingForResponse(false);
                 } else {
@@ -862,21 +786,21 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
               }}
               disabled={isCleaningUpRef.current}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
-                isListening ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse' : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+                isListening ? 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 animate-pulse' : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+              } ${micPressed ? 'scale-90 ring-4 ring-blue-400/40' : ''}`}
+              onMouseDown={() => setMicPressed(true)}
+              onMouseUp={() => setMicPressed(false)}
+              onMouseLeave={() => setMicPressed(false)}
             >
               {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             </button>
-
             {/* Speech Control */}
             <button
               onClick={() => {
                 if (isCleaningUpRef.current || !isModalOpenRef.current) return;
-                
                 if (isSpeaking) {
                   speechSynthesis.cancel();
                   setIsSpeaking(false);
-                  setAiMood('listening');
                 } else {
                   // Replay last message if available
                   const lastAiMessage = conversationHistory.filter(item => item.speaker === 'ai').pop();
@@ -887,26 +811,26 @@ const AIConsultantModal: React.FC<AIConsultantModalProps> = ({ isOpen, onClose }
               }}
               disabled={isCleaningUpRef.current}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
-                isSpeaking ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+                isSpeaking ? 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+              } ${micPressed ? 'scale-90 ring-4 ring-blue-400/40' : ''}`}
+              onMouseDown={() => setMicPressed(true)}
+              onMouseUp={() => setMicPressed(false)}
+              onMouseLeave={() => setMicPressed(false)}
             >
               {isSpeaking ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
             </button>
           </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="text-white text-sm">
-              <span className="text-gray-400">Session: </span>
-              {formatDuration(sessionDuration)}
-            </div>
-            
-            <button
-              onClick={handleEndCall}
-              className="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
-            >
-              <Phone className="w-6 h-6 transform rotate-[135deg]" />
-            </button>
-          </div>
+          
+          {/* End Call - moved to the right */}
+          <button
+            onClick={handleEndCall}
+            className={`w-12 h-12 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full flex items-center justify-center hover:from-red-700 hover:to-red-800 transition-colors`}
+            onMouseDown={() => setMicPressed(true)}
+            onMouseUp={() => setMicPressed(false)}
+            onMouseLeave={() => setMicPressed(false)}
+          >
+            <Phone className="w-6 h-6 transform rotate-[135deg]" />
+          </button>
         </div>
       </div>
     </div>

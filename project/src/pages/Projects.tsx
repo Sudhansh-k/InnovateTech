@@ -36,6 +36,9 @@ const Projects: React.FC = () => {
   // Only use user's actual projects, no default data
   const projects = userData?.projects || [];
 
+  // Add this line:
+  const teamMembers = userData?.team ? userData.team.map(m => m.name) : [];
+
   const handleNewProject = (projectData: any) => {
     const newProject = {
       ...projectData,
@@ -311,12 +314,12 @@ const Projects: React.FC = () => {
 
                         <div className="flex items-center justify-between">
                           <div className="flex -space-x-2">
-                            {project.team?.slice(0, 3).map((member, index) => (
+                            {project.team?.slice(0, 3).map((member: string, index: number) => (
                               <div
                                 key={index}
                                 className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-medium"
                               >
-                                {member.split(' ').map(n => n[0]).join('')}
+                                {member.split(' ').map((n: string) => n[0]).join('')}
                               </div>
                             )) || (
                               <div className="text-xs text-gray-500 dark:text-gray-400">No team assigned</div>
@@ -387,12 +390,12 @@ const Projects: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex -space-x-2">
-                                {project.team?.slice(0, 3).map((member, index) => (
+                                {project.team?.slice(0, 3).map((member: string, index: number) => (
                                   <div
                                     key={index}
                                     className="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full border border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-medium"
                                   >
-                                    {member.split(' ').map(n => n[0]).join('')}
+                                    {member.split(' ').map((n: string) => n[0]).join('')}
                                   </div>
                                 )) || (
                                   <span className="text-xs text-gray-500 dark:text-gray-400">No team</span>
@@ -443,6 +446,7 @@ const Projects: React.FC = () => {
         isOpen={isNewProjectModalOpen}
         onClose={() => setIsNewProjectModalOpen(false)}
         onSubmit={handleNewProject}
+        teamMembers={teamMembers}
       />
       <ExcelImportModal 
         isOpen={isExcelImportModalOpen}

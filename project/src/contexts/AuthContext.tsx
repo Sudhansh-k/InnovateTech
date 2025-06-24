@@ -35,6 +35,13 @@ interface UserData {
     notifications: any;
     privacy: any;
     preferences: any;
+    appearance?: any;
+    accessibility?: any;
+    integrations?: any;
+    billing?: any;
+    security?: any;
+    advanced?: any;
+    data?: any;
   };
 }
 
@@ -47,6 +54,7 @@ interface AuthContextType {
   updateUserData: (data: Partial<UserData>) => void;
   updateUser: (data: Partial<User>) => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,6 +70,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for existing session
@@ -72,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(JSON.parse(savedUser));
       setUserData(JSON.parse(savedUserData));
     }
+    setLoading(false);
   }, []);
 
   const register = async (formData: any): Promise<boolean> => {
@@ -228,6 +238,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('userData', JSON.stringify(currentUserData));
       localStorage.setItem(`userData_${foundUser.id}`, JSON.stringify(currentUserData));
 
+      const loginRecord = {
+        date: new Date().toLocaleString(),
+        device: navigator.userAgent,
+        status: 'Success',
+        location: 'Local device'
+      };
+      const loginHistoryKey = `loginHistory_${foundUser.id}`;
+      const prevHistory = JSON.parse(localStorage.getItem(loginHistoryKey) || '[]');
+      localStorage.setItem(loginHistoryKey, JSON.stringify([loginRecord, ...prevHistory]));
+
       return true;
     } catch (error) {
       console.error('Login failed:', error);
@@ -276,9 +296,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       updateUserData,
       updateUser,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      loading
     }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
