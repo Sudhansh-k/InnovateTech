@@ -57,8 +57,6 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showTaskInput, setShowTaskInput] = useState(false);
-  const [completedTasks, setCompletedTasks] = useState(member.completedTasks || 0);
-  const [totalTasks, setTotalTasks] = useState(member.totalTasks || 0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,27 +71,20 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setCompletedTasks(member.completedTasks || 0);
-    setTotalTasks(member.totalTasks || 0);
-  }, [member.completedTasks, member.totalTasks]);
-
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
   };
 
   const handleCompletedTasksChange = (value: number) => {
-    setCompletedTasks(value);
     if (onUpdateProgress) {
-      onUpdateProgress(member, Math.max(0, value), Math.max(1, totalTasks));
+      onUpdateProgress(member, Math.max(0, value), Math.max(1, member.totalTasks));
     }
   };
 
   const handleTotalTasksChange = (value: number) => {
-    setTotalTasks(value);
     if (onUpdateProgress) {
-      onUpdateProgress(member, Math.max(0, completedTasks), Math.max(1, value));
+      onUpdateProgress(member, Math.max(0, member.completedTasks), Math.max(1, value));
     }
   };
 
@@ -149,7 +140,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                     <input
                       type="number"
                       min="0"
-                      value={completedTasks}
+                      value={member.completedTasks || 0}
                       onChange={(e) => handleCompletedTasksChange(parseInt(e.target.value) || 0)}
                       className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
@@ -159,7 +150,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                     <input
                       type="number"
                       min="1"
-                      value={totalTasks}
+                      value={member.totalTasks || 1}
                       onChange={(e) => handleTotalTasksChange(parseInt(e.target.value) || 1)}
                       className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
