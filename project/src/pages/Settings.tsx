@@ -661,6 +661,9 @@ const Settings: React.FC = () => {
         <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
           {profileForm.firstName[0]}{profileForm.lastName[0]}
         </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You look great today! Ready to innovate?</p>
+        </div>
       </div>
 
       {/* Basic Information */}
