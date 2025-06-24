@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -35,6 +35,7 @@ const Analytics: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('overview');
+  const [refreshKey, setRefreshKey] = useState(0);
   const { user, userData } = useAuth();
 
   // Check if user has any business data OR imported analytics data
@@ -49,6 +50,16 @@ const Analytics: React.FC = () => {
 
   // User has data if they have either business metrics OR imported analytics
   const hasAnyData = hasBusinessData || hasAnalyticsData;
+
+  // Callback to handle import completion and refresh
+  const handleImportComplete = useCallback(() => {
+    setIsImportModalOpen(false);
+    // Force a refresh by updating the refresh key
+    setRefreshKey(prev => prev + 1);
+    // Also trigger a brief refresh state
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 1000);
+  }, []);
 
   // Get company information safely
   const getCompanyInfo = () => {
@@ -143,8 +154,8 @@ const Analytics: React.FC = () => {
 
       // If user has imported analytics data, use that
       if (hasAnalyticsData) {
-        const analyticsData = userData.analytics.historicalData;
-        const summary = userData.analytics.summary;
+        const analyticsData = userData?.analytics?.historicalData || [];
+        const summary = userData?.analytics?.summary;
         
         const totalRevenue = analyticsData.reduce((sum: number, row: any) => sum + (row.revenue || 0), 0);
         const totalConversions = analyticsData.reduce((sum: number, row: any) => sum + (row.conversions || 0), 0);
@@ -239,7 +250,7 @@ const Analytics: React.FC = () => {
       
       // If user has imported analytics data, use that
       if (hasAnalyticsData) {
-        const analyticsData = userData.analytics.historicalData;
+        const analyticsData = userData?.analytics?.historicalData || [];
         
         // Filter data based on time range
         const now = new Date();
@@ -283,11 +294,11 @@ const Analytics: React.FC = () => {
         const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return [{
           date: today,
-          visitors: userData.business.users || 0,
-          pageViews: Math.round((userData.business.users || 0) * 2.5),
-          sessions: Math.round((userData.business.users || 0) * 1.2),
-          revenue: userData.business.revenue || 0,
-          conversions: Math.round((userData.business.users || 0) * (userData.business.conversionRate || 0) / 100),
+          visitors: userData?.business?.users || 0,
+          pageViews: Math.round((userData?.business?.users || 0) * 2.5),
+          sessions: Math.round((userData?.business?.users || 0) * 1.2),
+          revenue: userData?.business?.revenue || 0,
+          conversions: Math.round((userData?.business?.users || 0) * (userData?.business?.conversionRate || 0) / 100),
           bounceRate: 35
         }];
       }
@@ -297,9 +308,9 @@ const Analytics: React.FC = () => {
       console.error('Error generating traffic data:', error);
       return generateEmptyData(timeRange);
     }
-  }, [timeRange, userData, hasAnyData, hasAnalyticsData, hasBusinessData]);
+  }, [timeRange, userData, hasAnyData, hasAnalyticsData, hasBusinessData, refreshKey]);
 
-  const metrics = useMemo(() => generateMetrics(), [timeRange, userData, hasAnyData, hasAnalyticsData, hasBusinessData]);
+  const metrics = useMemo(() => generateMetrics(), [timeRange, userData, hasAnyData, hasAnalyticsData, hasBusinessData, refreshKey]);
 
   // Enhanced device data with more details
   const deviceData = hasAnyData ? [
@@ -698,104 +709,106 @@ const Analytics: React.FC = () => {
                     </div>
                   </div>
                   <ResponsiveContainer width="100%" height={400}>
-                    {selectedMetric === 'overview' && (
-                      <AreaChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                        <XAxis dataKey="date" stroke="#6B7280" />
-                        <YAxis stroke="#6B7280" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }} 
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="visitors" 
-                          stackId="1"
-                          stroke="#3B82F6" 
-                          fill="#3B82F6" 
-                          fillOpacity={0.6}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="pageViews" 
-                          stackId="1"
-                          stroke="#10B981" 
-                          fill="#10B981" 
-                          fillOpacity={0.6}
-                        />
-                      </AreaChart>
-                    )}
-                    {selectedMetric === 'revenue' && (
-                      <RechartsLineChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                        <XAxis dataKey="date" stroke="#6B7280" />
-                        <YAxis stroke="#6B7280" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }} 
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="#10B981" 
-                          strokeWidth={3}
-                          dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                        />
-                      </RechartsLineChart>
-                    )}
-                    {selectedMetric === 'conversions' && (
-                      <BarChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                        <XAxis dataKey="date" stroke="#6B7280" />
-                        <YAxis stroke="#6B7280" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }} 
-                        />
-                        <Bar dataKey="conversions" fill="#8B5CF6" />
-                      </BarChart>
-                    )}
-                    {(selectedMetric === 'traffic' || selectedMetric === 'engagement') && (
-                      <RechartsLineChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                        <XAxis dataKey="date" stroke="#6B7280" />
-                        <YAxis stroke="#6B7280" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }} 
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="visitors" 
-                          stroke="#3B82F6" 
-                          strokeWidth={3}
-                          dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="sessions" 
-                          stroke="#F59E0B" 
-                          strokeWidth={3}
-                          dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
-                        />
-                      </RechartsLineChart>
-                    )}
+                    <div>
+                      {selectedMetric === 'overview' && (
+                        <AreaChart data={trafficData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                          <XAxis dataKey="date" stroke="#6B7280" />
+                          <YAxis stroke="#6B7280" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#1F2937', 
+                              border: 'none', 
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }} 
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="visitors" 
+                            stackId="1"
+                            stroke="#3B82F6" 
+                            fill="#3B82F6" 
+                            fillOpacity={0.6}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="pageViews" 
+                            stackId="1"
+                            stroke="#10B981" 
+                            fill="#10B981" 
+                            fillOpacity={0.6}
+                          />
+                        </AreaChart>
+                      )}
+                      {selectedMetric === 'revenue' && (
+                        <RechartsLineChart data={trafficData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                          <XAxis dataKey="date" stroke="#6B7280" />
+                          <YAxis stroke="#6B7280" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#1F2937', 
+                              border: 'none', 
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="revenue" 
+                            stroke="#10B981" 
+                            strokeWidth={3}
+                            dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                          />
+                        </RechartsLineChart>
+                      )}
+                      {selectedMetric === 'conversions' && (
+                        <BarChart data={trafficData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                          <XAxis dataKey="date" stroke="#6B7280" />
+                          <YAxis stroke="#6B7280" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#1F2937', 
+                              border: 'none', 
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }} 
+                          />
+                          <Bar dataKey="conversions" fill="#8B5CF6" />
+                        </BarChart>
+                      )}
+                      {(selectedMetric === 'traffic' || selectedMetric === 'engagement') && (
+                        <RechartsLineChart data={trafficData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                          <XAxis dataKey="date" stroke="#6B7280" />
+                          <YAxis stroke="#6B7280" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#1F2937', 
+                              border: 'none', 
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="visitors" 
+                            stroke="#3B82F6" 
+                            strokeWidth={3}
+                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="sessions" 
+                            stroke="#F59E0B" 
+                            strokeWidth={3}
+                            dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                          />
+                        </RechartsLineChart>
+                      )}
+                    </div>
                   </ResponsiveContainer>
                 </div>
 
@@ -959,7 +972,7 @@ const Analytics: React.FC = () => {
         {/* Data Import Modal */}
         <DataImportModal 
           isOpen={isImportModalOpen}
-          onClose={() => setIsImportModalOpen(false)}
+          onClose={handleImportComplete}
         />
       </div>
     );

@@ -17,7 +17,8 @@ import {
   Star,
   GitBranch,
   MessageSquare,
-  Upload
+  Upload,
+  X
 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import NewProjectModal from '../components/NewProjectModal';
@@ -31,6 +32,8 @@ const Projects: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any | null>(null);
+  const [viewingProject, setViewingProject] = useState<any | null>(null);
   const { userData, updateUserData } = useAuth();
 
   // Only use user's actual projects, no default data
@@ -76,12 +79,23 @@ const Projects: React.FC = () => {
   };
 
   const handleEditProject = (project: any) => {
-    // For now, just show an alert. You can implement a proper edit modal later
-    alert(`Edit functionality for "${project.name}" - Coming soon!`);
+    setEditingProject(project);
+  };
+
+  const handleSaveEditProject = (projectData: any) => {
+    if (userData) {
+      const updatedProjects = userData.projects.map(p => 
+        p.id === projectData.id ? { ...p, ...projectData, lastActivity: 'Just updated' } : p
+      );
+      updateUserData({
+        projects: updatedProjects
+      });
+      setEditingProject(null);
+    }
   };
 
   const handleViewProject = (project: any) => {
-    alert(`View details for "${project.name}" - Coming soon!`);
+    setViewingProject(project);
   };
 
   const handleDuplicateProject = (project: any) => {
@@ -97,6 +111,28 @@ const Projects: React.FC = () => {
       
       updateUserData({
         projects: [...userData.projects, duplicatedProject]
+      });
+    }
+  };
+
+  const handleToggleFavorite = (project: any) => {
+    if (userData) {
+      const updatedProjects = userData.projects.map(p => 
+        p.id === project.id ? { ...p, isFavorite: !p.isFavorite } : p
+      );
+      updateUserData({
+        projects: updatedProjects
+      });
+    }
+  };
+
+  const handleSetDeadline = (project: any, deadline: string) => {
+    if (userData) {
+      const updatedProjects = userData.projects.map(p => 
+        p.id === project.id ? { ...p, dueDate: deadline } : p
+      );
+      updateUserData({
+        projects: updatedProjects
       });
     }
   };
@@ -250,20 +286,19 @@ const Projects: React.FC = () => {
               </div>
 
               {/* Projects Grid/List */}
-              {filteredProjects.length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No projects found</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Try adjusting your search or filter criteria.</p>
-                </div>
-              ) : viewMode === 'grid' ? (
+              {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProjects.map((project) => (
-                    <div key={project.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                    <div key={project.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow">
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{project.name}</h3>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{project.name}</h3>
+                              {project.isFavorite && (
+                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{project.description}</p>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -275,6 +310,8 @@ const Projects: React.FC = () => {
                               onView={handleViewProject}
                               onDuplicate={handleDuplicateProject}
                               onUpdateProgress={handleUpdateProgress}
+                              onToggleFavorite={handleToggleFavorite}
+                              onSetDeadline={handleSetDeadline}
                             />
                           </div>
                         </div>
@@ -312,45 +349,47 @@ const Projects: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex -space-x-2">
-                            {project.team?.slice(0, 3).map((member: string, index: number) => (
-                              <div
-                                key={index}
-                                className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-medium"
-                              >
-                                {member.split(' ').map((n: string) => n[0]).join('')}
-                              </div>
-                            )) || (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">No team assigned</div>
-                            )}
-                            {project.team?.length > 3 && (
-                              <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
-                                +{project.team.length - 3}
-                              </div>
-                            )}
-                          </div>
+                        {project.team && project.team.length > 0 && (
                           <div className="flex items-center space-x-2">
-                            <button 
-                              onClick={() => handleViewProject(project)}
-                              className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => handleEditProject(project)}
-                              className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                            <Users className="w-4 h-4 text-gray-400" />
+                            <div className="flex -space-x-2">
+                              {project.team.slice(0, 3).map((member: string, index: number) => (
+                                <div
+                                  key={index}
+                                  className="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full border border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-medium"
+                                >
+                                  {member.split(' ').map((n: string) => n[0]).join('')}
+                                </div>
+                              ))}
+                              {project.team.length > 3 && (
+                                <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full border border-white dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 text-xs font-medium">
+                                  +{project.team.length - 3}
+                                </div>
+                              )}
+                            </div>
                           </div>
+                        )}
+
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => handleViewProject(project)}
+                            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleEditProject(project)}
+                            className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gray-50 dark:bg-gray-700">
@@ -368,7 +407,12 @@ const Projects: React.FC = () => {
                           <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td className="px-6 py-4">
                               <div>
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">{project.name}</div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">{project.name}</div>
+                                  {project.isFavorite && (
+                                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                                  )}
+                                </div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">{project.description}</div>
                               </div>
                             </td>
@@ -426,6 +470,8 @@ const Projects: React.FC = () => {
                                   onView={handleViewProject}
                                   onDuplicate={handleDuplicateProject}
                                   onUpdateProgress={handleUpdateProgress}
+                                  onToggleFavorite={handleToggleFavorite}
+                                  onSetDeadline={handleSetDeadline}
                                 />
                               </div>
                             </td>
@@ -448,11 +494,140 @@ const Projects: React.FC = () => {
         onSubmit={handleNewProject}
         teamMembers={teamMembers}
       />
+      
+      <NewProjectModal 
+        isOpen={!!editingProject}
+        onClose={() => setEditingProject(null)}
+        onSubmit={handleSaveEditProject}
+        teamMembers={teamMembers}
+        project={editingProject}
+        isEdit={true}
+      />
+      
       <ExcelImportModal 
         isOpen={isExcelImportModalOpen}
         onClose={() => setIsExcelImportModalOpen(false)}
         type="projects"
       />
+
+      {/* Project Details Modal */}
+      {viewingProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <GitBranch className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{viewingProject.name}</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Project Details</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewingProject(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
+                <p className="text-gray-600 dark:text-gray-400">{viewingProject.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</h4>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(viewingProject.status)}`}>
+                    {viewingProject.status.replace('-', ' ')}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</h4>
+                  <div className="flex items-center space-x-1">
+                    <Star className={`w-4 h-4 ${getPriorityColor(viewingProject.priority)}`} />
+                    <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{viewingProject.priority}</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Progress</h4>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${viewingProject.progress}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{viewingProject.progress}%</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</h4>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{viewingProject.dueDate || 'No deadline'}</span>
+                </div>
+              </div>
+              
+              {viewingProject.team && viewingProject.team.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Team Members</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingProject.team.map((member: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                      >
+                        {member}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {viewingProject.tags && viewingProject.tags.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingProject.tags.map((tag: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Created:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">
+                    {new Date(viewingProject.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Last Activity:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{viewingProject.lastActivity}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Tasks:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">
+                    {viewingProject.tasks.completed}/{viewingProject.tasks.total}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Comments:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{viewingProject.comments}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

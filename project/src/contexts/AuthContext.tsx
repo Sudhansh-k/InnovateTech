@@ -29,6 +29,20 @@ interface UserData {
     targetRevenue?: number;
     timeframe?: string;
   };
+  analytics?: {
+    historicalData: any[];
+    summary?: {
+      totalRevenue: number;
+      avgUsers: number;
+      conversionRate: number;
+      dataPoints: number;
+      dateRange: {
+        start: string;
+        end: string;
+      };
+    };
+    lastImported?: string;
+  };
   projects: any[];
   team: any[];
   settings: {

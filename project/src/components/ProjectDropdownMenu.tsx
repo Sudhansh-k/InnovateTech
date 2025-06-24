@@ -5,13 +5,8 @@ import {
   Trash2, 
   Eye, 
   Copy, 
-  Archive, 
   Star,
-  Users,
   Calendar,
-  Settings,
-  Download,
-  Share2,
   TrendingUp
 } from 'lucide-react';
 
@@ -21,14 +16,9 @@ interface ProjectDropdownMenuProps {
   onDelete?: (project: any) => void;
   onView?: (project: any) => void;
   onDuplicate?: (project: any) => void;
-  onArchive?: (project: any) => void;
-  onToggleFavorite?: (project: any) => void;
-  onManageTeam?: (project: any) => void;
-  onSetDeadline?: (project: any) => void;
-  onProjectSettings?: (project: any) => void;
-  onExport?: (project: any) => void;
-  onShare?: (project: any) => void;
   onUpdateProgress?: (project: any, progress: number) => void;
+  onToggleFavorite?: (project: any) => void;
+  onSetDeadline?: (project: any, deadline: string) => void;
 }
 
 const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
@@ -37,18 +27,15 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
   onDelete,
   onView,
   onDuplicate,
-  onArchive,
+  onUpdateProgress,
   onToggleFavorite,
-  onManageTeam,
-  onSetDeadline,
-  onProjectSettings,
-  onExport,
-  onShare,
-  onUpdateProgress
+  onSetDeadline
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProgressInput, setShowProgressInput] = useState(false);
+  const [showDeadlineInput, setShowDeadlineInput] = useState(false);
   const [progressValue, setProgressValue] = useState(project.progress || 0);
+  const [deadlineValue, setDeadlineValue] = useState(project.dueDate || '');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,9 +43,9 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setShowProgressInput(false);
+        setShowDeadlineInput(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -73,6 +60,14 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
       onUpdateProgress(project, Math.min(100, Math.max(0, progressValue)));
     }
     setShowProgressInput(false);
+    setIsOpen(false);
+  };
+
+  const handleDeadlineUpdate = () => {
+    if (onSetDeadline) {
+      onSetDeadline(project, deadlineValue);
+    }
+    setShowDeadlineInput(false);
     setIsOpen(false);
   };
 
@@ -96,9 +91,9 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
       color: 'text-orange-600 dark:text-orange-400'
     },
     {
-      icon: Copy,
-      label: 'Duplicate',
-      action: () => onDuplicate?.(project),
+      icon: Calendar,
+      label: 'Set Deadline',
+      action: () => setShowDeadlineInput(true),
       color: 'text-purple-600 dark:text-purple-400'
     },
     {
@@ -108,40 +103,10 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
       color: 'text-yellow-600 dark:text-yellow-400'
     },
     {
-      icon: Users,
-      label: 'Manage Team',
-      action: () => onManageTeam?.(project),
+      icon: Copy,
+      label: 'Duplicate',
+      action: () => onDuplicate?.(project),
       color: 'text-indigo-600 dark:text-indigo-400'
-    },
-    {
-      icon: Calendar,
-      label: 'Set Deadline',
-      action: () => onSetDeadline?.(project),
-      color: 'text-orange-600 dark:text-orange-400'
-    },
-    {
-      icon: Share2,
-      label: 'Share Project',
-      action: () => onShare?.(project),
-      color: 'text-cyan-600 dark:text-cyan-400'
-    },
-    {
-      icon: Download,
-      label: 'Export Data',
-      action: () => onExport?.(project),
-      color: 'text-gray-600 dark:text-gray-400'
-    },
-    {
-      icon: Settings,
-      label: 'Project Settings',
-      action: () => onProjectSettings?.(project),
-      color: 'text-gray-600 dark:text-gray-400'
-    },
-    {
-      icon: Archive,
-      label: project.status === 'archived' ? 'Unarchive' : 'Archive',
-      action: () => onArchive?.(project),
-      color: 'text-gray-600 dark:text-gray-400'
     },
     {
       icon: Trash2,
@@ -190,6 +155,34 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
                 </button>
                 <button
                   onClick={() => setShowProgressInput(false)}
+                  className="flex-1 px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : showDeadlineInput ? (
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="mb-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Set Deadline
+                </label>
+                <input
+                  type="date"
+                  value={deadlineValue}
+                  onChange={(e) => setDeadlineValue(e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleDeadlineUpdate}
+                  className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  Set
+                </button>
+                <button
+                  onClick={() => setShowDeadlineInput(false)}
                   className="flex-1 px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
                 >
                   Cancel
