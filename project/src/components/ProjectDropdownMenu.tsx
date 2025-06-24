@@ -50,9 +50,9 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleAction = (action: () => void) => {
+  const handleAction = (action: () => void, shouldClose = true) => {
     action();
-    setIsOpen(false);
+    if (shouldClose) setIsOpen(false);
   };
 
   const handleProgressUpdate = () => {
@@ -192,11 +192,12 @@ const ProjectDropdownMenu: React.FC<ProjectDropdownMenuProps> = ({
           ) : (
             menuItems.map((item, index) => {
               const Icon = item.icon;
+              const shouldClose = !['Update Progress', 'Set Deadline'].includes(item.label);
               return (
                 <div key={index}>
                   {item.separator && <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>}
                   <button
-                    onClick={() => handleAction(item.action)}
+                    onClick={() => handleAction(item.action, shouldClose)}
                     className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Icon className={`w-4 h-4 ${item.color}`} />
