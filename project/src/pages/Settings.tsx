@@ -661,20 +661,6 @@ const Settings: React.FC = () => {
         <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
           {profileForm.firstName[0]}{profileForm.lastName[0]}
         </div>
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Profile Picture</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Update your profile picture</p>
-          <div className="flex space-x-3">
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Upload className="w-4 h-4" />
-              <span>Upload Photo</span>
-            </button>
-            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <Trash2 className="w-4 h-4" />
-              <span>Remove</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Basic Information */}
