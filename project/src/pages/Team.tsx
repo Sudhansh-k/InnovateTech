@@ -361,6 +361,7 @@ const Team: React.FC = () => {
                             onEdit={handleEditMember}
                             onDelete={handleDeleteMember}
                             onView={handleViewMember}
+                            onUpdateProgress={handleUpdateProgress}
                           />
                         </div>
 
@@ -527,6 +528,7 @@ const Team: React.FC = () => {
                                   onEdit={handleEditMember}
                                   onDelete={handleDeleteMember}
                                   onView={handleViewMember}
+                                  onUpdateProgress={handleUpdateProgress}
                                 />
                               </div>
                             </td>
