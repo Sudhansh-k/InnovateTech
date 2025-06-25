@@ -342,109 +342,112 @@ const Team: React.FC = () => {
                 </div>
               ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredMembers.map((member) => (
-                    <div key={member.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-                      <div className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative">
-                              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                {member.avatar}
+                  {filteredMembers.map((member) => {
+                    const latest = teamMembers.find((m) => m.id === member.id) || member;
+                    return (
+                      <div key={latest.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                        <div className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                  {latest.avatar}
+                                </div>
+                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusColor(latest.status)} rounded-full border-2 border-white dark:border-gray-800`}></div>
                               </div>
-                              <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusColor(member.status)} rounded-full border-2 border-white dark:border-gray-800`}></div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{latest.name}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{latest.role}</p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{member.name}</h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{member.role}</p>
+                            <TeamMemberDropdownMenu 
+                              member={latest}
+                              onEdit={handleEditMember}
+                              onDelete={handleDeleteMember}
+                              onView={handleViewMember}
+                              onUpdateProgress={handleUpdateProgress}
+                            />
+                          </div>
+
+                          <div className="mb-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(latest.department)}`}>
+                              {latest.department}
+                            </span>
+                          </div>
+
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{latest.bio}</p>
+
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              <span>Task Completion</span>
+                              <span>{latest.totalTasks > 0 ? Math.round((latest.completedTasks / latest.totalTasks) * 100) : 0}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div 
+                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${latest.totalTasks > 0 ? (latest.completedTasks / latest.totalTasks) * 100 : 0}%` }}
+                              ></div>
                             </div>
                           </div>
-                          <TeamMemberDropdownMenu 
-                            member={member}
-                            onEdit={handleEditMember}
-                            onDelete={handleDeleteMember}
-                            onView={handleViewMember}
-                            onUpdateProgress={handleUpdateProgress}
-                          />
-                        </div>
 
-                        <div className="mb-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(member.department)}`}>
-                            {member.department}
-                          </span>
-                        </div>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <Mail className="w-4 h-4 mr-2" />
+                              <span className="truncate">{latest.email}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <MapPin className="w-4 h-4 mr-2" />
+                              <span>{latest.location}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <Activity className="w-4 h-4 mr-2" />
+                              <span>{latest.lastActive}</span>
+                            </div>
+                          </div>
 
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{member.bio}</p>
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Skills</p>
+                            <div className="flex flex-wrap gap-1">
+                              {latest.skills && latest.skills.map((skill: string, index: number) => (
+                                <span
+                                  key={index}
+                                  className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-xs font-medium"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
 
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            <span>Task Completion</span>
-                            <span>{member.totalTasks > 0 ? Math.round((member.completedTasks / member.totalTasks) * 100) : 0}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${member.totalTasks > 0 ? (member.completedTasks / member.totalTasks) * 100 : 0}%` }}
-                            ></div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <Mail className="w-4 h-4 mr-2" />
-                            <span className="truncate">{member.email}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            <span>{member.location}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <Activity className="w-4 h-4 mr-2" />
-                            <span>{member.lastActive}</span>
-                          </div>
-                        </div>
-
-                        <div className="mb-4">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Skills</p>
-                          <div className="flex flex-wrap gap-1">
-                            {member.skills && member.skills.map((skill: string, index: number) => (
-                              <span
-                                key={index}
-                                className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-xs font-medium"
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {latest.projects.length} active projects
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => handleMessageMember(latest)}
+                                className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                               >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {member.projects.length} active projects
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button 
-                              onClick={() => handleMessageMember(member)}
-                              className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => handleVideoCall(member)}
-                              className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-                            >
-                              <Video className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => handleEditMember(member)}
-                              className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                                <MessageSquare className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleVideoCall(latest)}
+                                className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                              >
+                                <Video className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleEditMember(latest)}
+                                className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
@@ -461,81 +464,84 @@ const Team: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {filteredMembers.map((member) => (
-                          <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center space-x-3">
-                                <div className="relative">
-                                  <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {member.avatar}
+                        {filteredMembers.map((member) => {
+                          const latest = teamMembers.find((m) => m.id === member.id) || member;
+                          return (
+                            <tr key={latest.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="relative">
+                                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                      {latest.avatar}
+                                    </div>
+                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusColor(latest.status)} rounded-full border border-white dark:border-gray-800`}></div>
                                   </div>
-                                  <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusColor(member.status)} rounded-full border border-white dark:border-gray-800`}></div>
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{latest.name}</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">{latest.role}</div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">{member.name}</div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">{member.role}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(member.department)}`}>
-                                {member.department}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className={`w-2 h-2 ${getStatusColor(member.status)} rounded-full mr-2`}></div>
-                                <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{member.status}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
-                                  <div 
-                                    className="bg-green-600 h-2 rounded-full"
-                                    style={{ width: `${member.totalTasks > 0 ? (member.completedTasks / member.totalTasks) * 100 : 0}%` }}
-                                  ></div>
-                                </div>
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  {member.totalTasks > 0 ? Math.round((member.completedTasks / member.totalTasks) * 100) : 0}%
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(latest.department)}`}>
+                                  {latest.department}
                                 </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                              <div>{member.email}</div>
-                              <div>{member.phone}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center space-x-2">
-                                <button 
-                                  onClick={() => handleMessageMember(member)}
-                                  className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                                >
-                                  <MessageSquare className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => handleVideoCall(member)}
-                                  className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-                                >
-                                  <Video className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => handleEditMember(member)}
-                                  className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <TeamMemberDropdownMenu 
-                                  member={member}
-                                  onEdit={handleEditMember}
-                                  onDelete={handleDeleteMember}
-                                  onView={handleViewMember}
-                                  onUpdateProgress={handleUpdateProgress}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center">
+                                  <div className={`w-2 h-2 ${getStatusColor(latest.status)} rounded-full mr-2`}></div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{latest.status}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center">
+                                  <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                    <div 
+                                      className="bg-green-600 h-2 rounded-full"
+                                      style={{ width: `${latest.totalTasks > 0 ? (latest.completedTasks / latest.totalTasks) * 100 : 0}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {latest.totalTasks > 0 ? Math.round((latest.completedTasks / latest.totalTasks) * 100) : 0}%
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                <div>{latest.email}</div>
+                                <div>{latest.phone}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-2">
+                                  <button 
+                                    onClick={() => handleMessageMember(latest)}
+                                    className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                  >
+                                    <MessageSquare className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleVideoCall(latest)}
+                                    className="text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                                  >
+                                    <Video className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleEditMember(latest)}
+                                    className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <TeamMemberDropdownMenu 
+                                    member={latest}
+                                    onEdit={handleEditMember}
+                                    onDelete={handleDeleteMember}
+                                    onView={handleViewMember}
+                                    onUpdateProgress={handleUpdateProgress}
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
