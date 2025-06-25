@@ -42,14 +42,16 @@ const Team: React.FC = () => {
 
   const handleAddMember = (memberData: any) => {
     if (userData) {
+      const newMember = { ...memberData, id: memberData.id || Date.now().toString() };
       updateUserData({
-        team: [...(userData.team || []), memberData]
+        team: [...(userData.team || []), newMember]
       });
     }
   };
 
   const handleUpdateProgress = (member: any, completedTasks: number, totalTasks: number) => {
     if (userData) {
+      console.log('Updating member progress:', member.id, completedTasks, totalTasks);
       const updatedTeam = userData.team.map(m => 
         m.id === member.id ? { ...m, completedTasks, totalTasks } : m
       );
