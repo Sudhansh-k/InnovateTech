@@ -44,6 +44,7 @@ const Team: React.FC = () => {
     if (userData) {
       const newMember = { ...memberData, id: memberData.id || Date.now().toString() };
       updateUserData({
+        ...userData,
         team: [...(userData.team || []), newMember]
       });
     }
@@ -56,6 +57,7 @@ const Team: React.FC = () => {
         m.id === member.id ? { ...m, completedTasks, totalTasks } : m
       );
       updateUserData({
+        ...userData,
         team: updatedTeam
       });
     }
@@ -65,6 +67,7 @@ const Team: React.FC = () => {
     if (userData && window.confirm(`Are you sure you want to remove ${member.name} from the team?`)) {
       const updatedTeam = userData.team.filter(m => m.id !== member.id);
       updateUserData({
+        ...userData,
         team: updatedTeam
       });
     }
@@ -77,7 +80,10 @@ const Team: React.FC = () => {
   const handleSaveEditMember = (updatedMember: any) => {
     if (userData) {
       const updatedTeam = userData.team.map((m: any) => m.id === updatedMember.id ? updatedMember : m);
-      updateUserData({ team: updatedTeam });
+      updateUserData({
+        ...userData,
+        team: updatedTeam
+      });
       setEditingMember(null);
     }
   };
