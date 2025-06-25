@@ -173,7 +173,8 @@ const DataImportModal: React.FC<DataImportModalProps> = ({ isOpen, onClose }) =>
           ...userData?.business,
           revenue: Math.round(totalRevenue / processedData.length), // Average daily revenue
           users: avgUsers,
-          conversionRate: parseFloat(conversionRate.toFixed(2))
+          conversionRate: parseFloat(conversionRate.toFixed(2)),
+          aiInteractions: userData?.business?.aiInteractions ?? 0
         }
       });
       
@@ -184,6 +185,11 @@ const DataImportModal: React.FC<DataImportModalProps> = ({ isOpen, onClose }) =>
         conversionRate: parseFloat(conversionRate.toFixed(2)),
         dateRange: `${processedData[0].date} to ${processedData[processedData.length - 1].date}`
       });
+
+      // Automatically close modal and trigger refresh after import
+      setTimeout(() => {
+        onClose();
+      }, 500);
       
     } catch (error) {
       console.error('Error processing file:', error);
