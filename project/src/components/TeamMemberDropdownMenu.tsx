@@ -63,7 +63,12 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        // Prevent closing if the click is inside an open form
+        !(event.target instanceof HTMLElement && event.target.closest('.update-tasks-form'))
+      ) {
         setIsOpen(false);
         setShowTaskInput(false);
       }
@@ -144,7 +149,13 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-8 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
           {showTaskInput ? (
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <form
+              className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 update-tasks-form"
+              onSubmit={e => {
+                e.preventDefault();
+                handleTaskUpdate();
+              }}
+            >
               <div className="mb-2">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Update Task Progress
@@ -169,12 +180,13 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    onClick={handleTaskUpdate}
+                    type="submit"
                     className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                   >
                     Update
                   </button>
                   <button
+                    type="button"
                     onClick={() => setShowTaskInput(false)}
                     className="flex-1 px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
                   >
@@ -182,7 +194,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                   </button>
                 </div>
               </div>
-            </div>
+            </form>
           ) : (
             <>
               {menuItems.map((item, index) => {
