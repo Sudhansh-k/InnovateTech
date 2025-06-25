@@ -86,6 +86,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
   };
 
   const handleTaskUpdate = () => {
+    console.log('handleTaskUpdate called', { member, completedValue, totalValue });
     if (onUpdateProgress) {
       onUpdateProgress(member, Math.max(0, completedValue), Math.max(1, totalValue));
     }
