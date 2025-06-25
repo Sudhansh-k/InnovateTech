@@ -66,14 +66,12 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
-        // Prevent closing if the click is inside an open form
         !(event.target instanceof HTMLElement && event.target.closest('.update-tasks-form'))
       ) {
         setIsOpen(false);
         setShowTaskInput(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -91,7 +89,6 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
   };
 
   const handleTaskUpdate = () => {
-    console.log('handleTaskUpdate called', { member, completedValue, totalValue });
     if (onUpdateProgress) {
       onUpdateProgress(member, Math.max(0, completedValue), Math.max(1, totalValue));
     }
@@ -160,23 +157,27 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Update Task Progress
                 </label>
-                <div className="flex items-center space-x-2 mb-2">
-                  <label className="text-xs text-gray-600 dark:text-gray-400">Done:</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={completedValue}
-                    onChange={(e) => setCompletedValue(parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                  <label className="text-xs text-gray-600 dark:text-gray-400">Total:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={totalValue}
-                    onChange={(e) => setTotalValue(parseInt(e.target.value) || 1)}
-                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
+                <div className="flex flex-col gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Done:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={completedValue}
+                      onChange={e => setCompletedValue(parseInt(e.target.value) || 0)}
+                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Total:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={totalValue}
+                      onChange={e => setTotalValue(parseInt(e.target.value) || 1)}
+                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -202,7 +203,13 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                 return (
                   <div key={index}>
                     <button
-                      onClick={() => handleAction(item.action)}
+                      onClick={() => {
+                        if (item.label === 'Update Tasks') {
+                          setShowTaskInput(true);
+                        } else {
+                          handleAction(item.action);
+                        }
+                      }}
                       className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Icon className={`w-4 h-4 ${item.color}`} />
