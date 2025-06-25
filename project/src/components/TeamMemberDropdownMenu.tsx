@@ -57,6 +57,8 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showTaskInput, setShowTaskInput] = useState(false);
+  const [completedValue, setCompletedValue] = useState(member.completedTasks || 0);
+  const [totalValue, setTotalValue] = useState(member.totalTasks || 1);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,23 +73,17 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleAction = (action: () => void) => {
+  const handleAction = (action: () => void, shouldClose = true) => {
     action();
+    if (shouldClose) setIsOpen(false);
+  };
+
+  const handleTaskUpdate = () => {
+    if (onUpdateProgress) {
+      onUpdateProgress(member, Math.max(0, completedValue), Math.max(1, totalValue));
+    }
+    setShowTaskInput(false);
     setIsOpen(false);
-  };
-
-  const handleCompletedTasksChange = (value: number) => {
-    if (onUpdateProgress) {
-      onUpdateProgress(member, Math.max(0, value), Math.max(1, member.totalTasks));
-    }
-    setShowTaskInput(false);
-  };
-
-  const handleTotalTasksChange = (value: number) => {
-    if (onUpdateProgress) {
-      onUpdateProgress(member, Math.max(0, member.completedTasks), Math.max(1, value));
-    }
-    setShowTaskInput(false);
   };
 
   const isLeader = member.department === 'Leadership' || member.role.toLowerCase().includes('ceo') || member.role.toLowerCase().includes('cto');
@@ -103,21 +99,27 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       icon: Edit,
       label: 'Edit Profile',
       action: () => onEdit?.(member),
-      color: 'text-orange-600 dark:text-orange-400'
+      color: 'text-green-600 dark:text-green-400'
     },
     {
       icon: TrendingUp,
       label: 'Update Tasks',
-      action: () => setShowTaskInput(true),
-      color: 'text-pink-600 dark:text-pink-400'
-    },
-    {
-      icon: UserMinus,
-      label: 'Remove from Team',
-      action: () => onDelete?.(member),
-      color: 'text-red-600 dark:text-red-400'
+      action: () => {
+        setCompletedValue(member.completedTasks || 0);
+        setTotalValue(member.totalTasks || 1);
+        setShowTaskInput(true);
+      },
+      color: 'text-orange-600 dark:text-orange-400'
     }
   ];
+
+  const removeItem = {
+    icon: UserMinus,
+    label: 'Remove from Team',
+    action: () => onDelete?.(member),
+    color: 'text-red-600 dark:text-red-400',
+    separator: true
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -134,49 +136,69 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-8 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
           {showTaskInput ? (
-            <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="mb-1">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="mb-2">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Update Task Progress
                 </label>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-1">
-                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Done:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={member.completedTasks || 0}
-                      onChange={(e) => handleCompletedTasksChange(parseInt(e.target.value) || 0)}
-                      onBlur={() => setShowTaskInput(false)}
-                      className="flex-1 px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-14"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <label className="text-xs text-gray-600 dark:text-gray-400 w-12">Total:</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={member.totalTasks || 1}
-                      onChange={(e) => handleTotalTasksChange(parseInt(e.target.value) || 1)}
-                      onBlur={() => setShowTaskInput(false)}
-                      className="flex-1 px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-14"
-                    />
-                  </div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <label className="text-xs text-gray-600 dark:text-gray-400">Done:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={completedValue}
+                    onChange={(e) => setCompletedValue(parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <label className="text-xs text-gray-600 dark:text-gray-400">Total:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={totalValue}
+                    onChange={(e) => setTotalValue(parseInt(e.target.value) || 1)}
+                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleTaskUpdate}
+                    className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={() => setShowTaskInput(false)}
+                    className="flex-1 px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
           ) : (
             <>
-              {menuItems.map((item, idx) => (
-                <button
-                  key={item.label}
-                  onClick={() => handleAction(item.action)}
-                  className={`flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${item.color} ${idx === menuItems.length - 1 ? '' : 'border-b border-gray-200 dark:border-gray-700'}`}
-                >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.label}
-                </button>
-              ))}
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={index}>
+                    <button
+                      onClick={() => handleAction(item.action)}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Icon className={`w-4 h-4 ${item.color}`} />
+                      <span>{item.label}</span>
+                    </button>
+                  </div>
+                );
+              })}
+              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+              <button
+                onClick={() => handleAction(removeItem.action)}
+                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <removeItem.icon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <span>{removeItem.label}</span>
+              </button>
             </>
           )}
         </div>
