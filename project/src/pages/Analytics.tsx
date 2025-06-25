@@ -296,6 +296,27 @@ const Analytics: React.FC = () => {
             bounceRate: Math.random() * 20 + 30 // Placeholder since we don't have this data
           }));
         }
+        // If no data matches the time range, show the most recent N rows
+        const getDataPoints = (range: string) => {
+          switch (range) {
+            case '7d': return 7;
+            case '30d': return 30;
+            case '90d': return 90;
+            case '1y': return 12;
+            default: return 7;
+          }
+        };
+        const N = getDataPoints(timeRange);
+        const recentData = analyticsData.slice(-N);
+        return recentData.map((item: any) => ({
+          date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          visitors: item.users || 0,
+          pageViews: item.pageviews || 0,
+          sessions: item.sessions || 0,
+          revenue: item.revenue || 0,
+          conversions: item.conversions || 0,
+          bounceRate: Math.random() * 20 + 30
+        }));
       }
       
       // If user only has business data but no historical data, show a week of flat data
