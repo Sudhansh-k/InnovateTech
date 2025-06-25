@@ -144,7 +144,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-8 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+        <div className="absolute right-0 top-8 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
           {showTaskInput ? (
             <form
               className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 update-tasks-form"
@@ -165,7 +165,7 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                       min="0"
                       value={completedValue}
                       onChange={e => setCompletedValue(parseInt(e.target.value) || 0)}
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white max-w-full"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -175,8 +175,20 @@ const TeamMemberDropdownMenu: React.FC<TeamMemberDropdownMenuProps> = ({
                       min="1"
                       value={totalValue}
                       onChange={e => setTotalValue(parseInt(e.target.value) || 1)}
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white max-w-full"
                     />
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    <span>Task Completion</span>
+                    <span>{totalValue > 0 ? Math.round((completedValue / totalValue) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${totalValue > 0 ? (completedValue / totalValue) * 100 : 0}%` }}
+                    ></div>
                   </div>
                 </div>
                 <div className="flex space-x-2">
