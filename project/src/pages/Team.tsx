@@ -51,8 +51,8 @@ const Team: React.FC = () => {
   };
 
   const handleUpdateProgress = (member: any, completedTasks: number, totalTasks: number) => {
+    console.log('handleUpdateProgress called', { member, completedTasks, totalTasks });
     if (userData) {
-      console.log('Updating member progress:', member.id, completedTasks, totalTasks);
       const updatedTeam = userData.team.map(m => 
         m.id === member.id ? { ...m, completedTasks, totalTasks } : m
       );
